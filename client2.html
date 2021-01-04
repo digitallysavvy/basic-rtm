@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <script src="agora-rtm-sdk-1.4.1.js" type="text/javascript"></script>
+  </head>
+  <body>
+
+  </body>
+  <script type="text/javascript">
+  const appID = '';
+  const channelName = 'demoChannelName';
+  const client = AgoraRTM.createInstance(appID); 
+  const channel = client.createChannel(channelName); // Pass your channel ID here.
+
+  // add callbacks before joining the channel.
+  client.on('ConnectionStateChange', (newState, reason) => {
+    console.log('on connection state changed to ' + newState + ' reason: ' + reason);
+  });
+
+  // event listener for receiving a peer-to-peer message.
+  client.on('MessageFromPeer', ({ text }, peerId) => { 
+    // text: text of the received message; peerId: User ID of the sender.
+    console.log('AgoraRTM msg from user ' + peerId + ' recieved: \n' + text);
+  });
+
+  // event listener for receiving a channel message
+  channel.on('ChannelMessage', ({ text }, senderId) => { 
+    // text: text of the received channel message; senderId: user ID of the sender.
+    console.log('AgoraRTM msg from user ' + senderId + ' recieved: \n' + text);
+  });
+
+  // join the rtm channel
+  client.login({ token: null, uid: 'x200' }).then(() => {
+    console.log('AgoraRTM client login success');
+
+    sendP2PMessage();
+
+    // join a channel and send a message
+    channel.join().then(() => {
+      // join-channel success
+      sendChannelMessage();
+    }).catch(error => {
+      // join-channel failure
+      console.log('failed to join channel for error: ' +  error);
+    });    
+  
+  }).catch(err => {
+    console.log('AgoraRTM client login failure', err);
+  });
+
+
+  function sendChannelMessage(){
+    const msg = { 
+      description: undefined,
+      messageType: 'TEXT',
+      rawMessage: undefined,
+      text: 'x200: test channel message' 
+    } 
+    channel.sendMessage(msg).then(() => {
+      // channel message-send success
+    }).catch(error => {
+    // channel message-send failure
+    });
+  }
+
+
+  function sendP2PMessage() {
+    // An RtmMessage object.
+    const msg = { 
+      description: undefined,
+      messageType: 'TEXT',
+      rawMessage: undefined,
+      text: 'x200: test peer message' 
+    } 
+    const recipient = 'x100' // The user ID of the remote user.
+    const options = { enableHistoricalMessaging: true, enableOfflineMessaging: false }
+
+    // p2p message
+    client.sendMessageToPeer(msg,recipient, options).then(sendResult => {
+    if (sendResult.hasPeerReceived) {
+    /* Your code for handling the event that the remote user receives the message. */
+    } else {
+    /* Your code for handling the event that the message is received by the server but the remote user cannot be reached. */
+    }
+    }).catch(error => {
+    /* Your code for handling the event of a message send failure. */
+    });  
+  }
+
+  </script>
+</html>
